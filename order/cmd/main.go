@@ -5,9 +5,10 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+
 	"github.com/davecgh/go-spew/spew"
 	"github.com/hallgren/eventsourcing"
-	s "github.com/hallgren/eventsourcing/eventstore/sql"
+	sqles "github.com/hallgren/eventsourcing/eventstore/sql"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -24,7 +25,7 @@ func main() {
 		func() interface{} { return &ardanlabs.Paid{} },
 		func() interface{} { return &ardanlabs.Deleted{} },
 	)
-	sqlEventStore := s.Open(db, *ser)
+	sqlEventStore := sqles.Open(db, *ser)
 	if err != nil {
 		panic(err)
 	}
@@ -35,14 +36,22 @@ func main() {
 	}
 	// Create a repo to handle event sourced
 	repo := eventsourcing.NewRepository(sqlEventStore, nil)
+
 	o := ardanlabs.Create()
 	o.AddItem(123)
 	o.AddItem(456)
 	o.Delete()
-	spew.Dump(o)
+	//spew.Dump(o)
 	repo.Save(o)
 
 	orderCopy := ardanlabs.Order{}
 	repo.Get(o.ID(), &orderCopy)
 	spew.Dump(orderCopy)
+
+	/*
+		order := ardanlabs.Order{}
+		repo.Get("jDQPGoPqDbrCzL72ScD9", &order)
+		order.Delete()
+		spew.Dump(order)
+	*/
 }
