@@ -1,7 +1,7 @@
 package main
 
 import (
-	"ardanlabs"
+	"ardanlabs/order"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -18,12 +18,12 @@ func main() {
 		panic(err)
 	}
 	ser := eventsourcing.NewSerializer(json.Marshal, json.Unmarshal)
-	ser.RegisterTypes(&ardanlabs.Order{},
-		func() interface{} { return &ardanlabs.Created{} },
-		func() interface{} { return &ardanlabs.ItemAdded{} },
-		func() interface{} { return &ardanlabs.ItemRemoved{} },
-		func() interface{} { return &ardanlabs.Paid{} },
-		func() interface{} { return &ardanlabs.Deleted{} },
+	ser.RegisterTypes(&order.Order{},
+		func() interface{} { return &order.Created{} },
+		func() interface{} { return &order.ItemAdded{} },
+		func() interface{} { return &order.ItemRemoved{} },
+		func() interface{} { return &order.PaidWithCreditCard{} },
+		func() interface{} { return &order.Deleted{} },
 	)
 	sqlEventStore := sqles.Open(db, *ser)
 	if err != nil {
@@ -37,19 +37,19 @@ func main() {
 	// Create a repo to handle event sourced
 	repo := eventsourcing.NewRepository(sqlEventStore, nil)
 
-	o := ardanlabs.Create()
+	o := order.Create()
 	o.AddItem(123)
 	o.AddItem(456)
 	o.Delete()
 	//spew.Dump(o)
 	repo.Save(o)
 
-	orderCopy := ardanlabs.Order{}
+	orderCopy := order.Order{}
 	repo.Get(o.ID(), &orderCopy)
 	spew.Dump(orderCopy)
 
 	/*
-		order := ardanlabs.Order{}
+		order := order.Order{}
 		repo.Get("jDQPGoPqDbrCzL72ScD9", &order)
 		order.Delete()
 		spew.Dump(order)
